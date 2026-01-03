@@ -11,6 +11,8 @@ from app.core.database import db
 from app.middlewares.audit import AuditMiddleware
 from app.middlewares.auth import AuthMiddleware
 from app.middlewares.org_context import OrgContextMiddleware
+from app.middlewares.school_context import SchoolContextMiddleware
+from app.middlewares.school_user_context import SchoolUserContextMiddleware # New
 from app.modules.auth.service import AuthService
 
 # Routers
@@ -22,6 +24,8 @@ from app.modules.subscriptions.router import router as sub_router
 from app.modules.payments.router import router as payment_router
 from app.modules.org_auth.router import router as org_auth_router
 from app.modules.audit.router import router as audit_router
+from app.modules.schools.router import router as school_router
+from app.modules.school_auth.router import router as school_auth_router # New
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -81,6 +85,8 @@ app.add_middleware(
 app.add_middleware(AuditMiddleware)
 app.add_middleware(AuthMiddleware) # Platform Auth
 app.add_middleware(OrgContextMiddleware) # Org Context Auth
+app.add_middleware(SchoolContextMiddleware) # School Context Auth
+app.add_middleware(SchoolUserContextMiddleware) # School User Context (New)
 
 # --- Platform Routes Group ---
 platform_router = APIRouter()
@@ -105,9 +111,17 @@ app.include_router(public_router, prefix="/public")
 # --- Org Routes Group ---
 org_app_router = APIRouter()
 org_app_router.include_router(org_auth_router, prefix="/auth", tags=["Org: Auth"])
+org_app_router.include_router(school_router, prefix="/schools", tags=["Org: Schools"])
 
 # Mount Org Routes
 app.include_router(org_app_router, prefix="/org")
+
+# --- School Routes Group ---
+school_app_router = APIRouter()
+school_app_router.include_router(school_auth_router, prefix="/auth", tags=["School: Auth"])
+
+# Mount School Routes
+app.include_router(school_app_router, prefix="/school")
 
 
 @app.get("/")

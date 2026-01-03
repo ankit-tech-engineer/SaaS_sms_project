@@ -88,3 +88,42 @@ async def get_current_org_user(token: Annotated[str, Depends(org_oauth2_scheme)]
         raise credentials_exception
         
     return user
+
+# --- School User Dependencies ---
+
+from app.core.security_school import decode_access_token
+
+school_oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/school/auth/token",
+    scheme_name="School User Auth"
+)
+
+async def get_current_school_user(token: Annotated[str, Depends(school_oauth2_scheme)]) -> dict:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    payload = decode_access_token(token)
+    if not payload:
+        raise credentials_exception
+        
+    user_id = payload.get("sub")
+    school_id = payload.get("school_id")
+    
+    if not user_id or not school_id:
+        raise credentials_exception
+        
+    db = await get_database()
+    
+    # 1. Check User
+    user = await db["school_users"].find_one({"_id": user_id, "status": "active"})
+    if not user:
+        raise credentials_exception
+        
+    # 2. Check Context Enforcement (User must belong to the school in token)
+    if user["school_id"] != school_id:
+         raise HTTPException(status_code=403, detail="School Context Mismatch")
+
+    return user
