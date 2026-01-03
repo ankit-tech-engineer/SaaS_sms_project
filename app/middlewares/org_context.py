@@ -6,8 +6,8 @@ from app.core.config import settings
 
 class OrgContextMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # Only apply to /org routes, but exclude /org/auth/login and public routes
-        if request.url.path.startswith("/org") and not request.url.path.startswith("/org/auth/login"):
+        # Only apply to /org routes, but exclude login endpoints
+        if request.url.path.startswith("/org") and not request.url.path.startswith("/org/auth/login") and not request.url.path.startswith("/org/auth/token"):
             auth_header = request.headers.get("Authorization")
             if not auth_header or not auth_header.startswith("Bearer "):
                 return JSONResponse(

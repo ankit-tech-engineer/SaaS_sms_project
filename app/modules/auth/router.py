@@ -1,13 +1,39 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
-from app.modules.auth.schema import LoginRequest, TokenResponse
+from app.modules.auth.schema import LoginRequest, TokenResponse, RefreshTokenRequest
 from app.modules.auth.service import AuthService
 from app.utils.response import APIResponse
 from app.core.config import settings
 from app.core.security import create_access_token, create_refresh_token
+from jose import jwt, JWTError
 
 router = APIRouter()
+
+@router.post("/refresh-token")
+async def refresh_token(request: RefreshTokenRequest):
+    try:
+        payload = jwt.decode(request.refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        email: str = payload.get("sub")
+        if payload.get("type") != "refresh":
+             raise HTTPException(status_code=401, detail="Invalid token type")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+        
+    user = await AuthService.get_user_by_email(email)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+        
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        subject=user.email, expires_delta=access_token_expires
+    )
+    
+    return APIResponse.success({
+        "access_token": access_token,
+        "token_type": "bearer",
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    }, "Token refreshed successfully")
 
 @router.post("/login", response_model=TokenResponse)
 async def login(login_data: LoginRequest):

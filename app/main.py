@@ -21,6 +21,7 @@ from app.modules.organizations.router import router as org_router
 from app.modules.subscriptions.router import router as sub_router
 from app.modules.payments.router import router as payment_router
 from app.modules.org_auth.router import router as org_auth_router
+from app.modules.audit.router import router as audit_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -89,6 +90,7 @@ platform_router.include_router(platform_admin_router, prefix="/admin", tags=["Pl
 platform_router.include_router(plans_router, prefix="/plans", tags=["Platform: Plans"])
 platform_router.include_router(sub_router, prefix="/subscriptions", tags=["Platform: Subscriptions"])
 platform_router.include_router(payment_router, prefix="/payments", tags=["Platform: Payments"])
+platform_router.include_router(audit_router, prefix="/audit", tags=["Platform: Audit"])
 
 # Mount Platform Routes
 app.include_router(platform_router, prefix="/platform")

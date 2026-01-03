@@ -21,10 +21,20 @@ class AuditMiddleware(BaseHTTPMiddleware):
             "url": str(request.url),
             "client": request.client.host if request.client else "unknown",
             "status_code": response.status_code,
-            "process_time": f"{process_time:.4f}s"
+            "process_time": process_time,
+            "timestamp": time.time(),
+            "user_id": getattr(request.state, "user_id", None) or getattr(request.state, "org_id", None) 
         }
         
-        # In a real system, you might save this to DB
+        # Async insert to DB
+        try:
+            from app.core.database import db
+            if db.client:
+                database = db.get_db()
+                await database["audit_logs"].insert_one(log_data)
+        except Exception as e:
+            logger.error(f"Failed to write audit log: {e}")
+
         logger.info(f"AUDIT LOG: {log_data}")
         
         return response
