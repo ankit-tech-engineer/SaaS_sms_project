@@ -51,3 +51,27 @@ async def assign_subscription(sub_in: SubscriptionAssignRequest):
         "status": new_sub.status,
         "valid_till": new_sub.valid_till.date()
     }, "Subscription assigned successfully")
+
+from app.utils.dependent_details import fetch_dependent_details
+
+@router.get("", dependencies=[Depends(check_permissions([Permission.MANAGE_PLANS, Permission.MANAGE_ORGS]))])
+async def list_subscriptions():
+    db = await get_database()
+    cursor = db["subscriptions"].find().sort("created_at", -1)
+    subscriptions = await cursor.to_list(length=100)
+    
+    # Enrichment Config
+    DEPENDENCY_MAP = {
+      "org_id": {
+          "collection": "organizations",
+          "name_field": "org_name"
+      },
+      "plan_id": {
+          "collection": "plans",
+          "name_field": "name"
+      }
+    }
+    
+    enriched_data = await fetch_dependent_details(subscriptions, DEPENDENCY_MAP)
+    
+    return APIResponse.success(enriched_data, "Subscriptions retrieved successfully")
