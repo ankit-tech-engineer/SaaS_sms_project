@@ -126,4 +126,9 @@ async def get_current_school_user(token: Annotated[str, Depends(school_oauth2_sc
     if user["school_id"] != school_id:
          raise HTTPException(status_code=403, detail="School Context Mismatch")
 
+    # 3. Check School Status (CRITICAL: Block access if school is suspended)
+    school = await db["schools"].find_one({"_id": school_id})
+    if not school or school.get("status") != "active":
+        raise HTTPException(status_code=403, detail="School is suspended or inactive")
+
     return user

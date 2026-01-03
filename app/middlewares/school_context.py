@@ -5,6 +5,10 @@ from app.core.database import db
 
 class SchoolContextMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        # 0. Bypass if School Context is already established (e.g. by SchoolUserContextMiddleware)
+        if getattr(request.state, "school_id", None):
+            return await call_next(request)
+
         # Apply only to /school/* routes (future scope, but good to have ready)
         # OR if we want to enforce it on generic routes that might need school context.
         # For now, let's assume this applies when the path starts with /school
