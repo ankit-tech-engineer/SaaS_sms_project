@@ -16,6 +16,8 @@ from app.middlewares.school_user_context import SchoolUserContextMiddleware # Ne
 from app.modules.auth.service import AuthService
 
 # Routers
+
+# Routers
 from app.modules.auth.router import router as auth_router
 from app.modules.platform_admin.router import router as platform_admin_router
 from app.modules.plans.router import router as plans_router
@@ -31,6 +33,10 @@ from app.modules.academics.sections.router import router as sections_router
 from app.modules.academics.subjects.router import router as subjects_router
 from app.modules.students.router import router as students_router
 from app.modules.student_auth.router import router as student_auth_router
+from app.modules.teachers.router import router as teachers_router # New
+from app.modules.teacher_auth.router import router as teacher_auth_router # New
+from app.modules.section_coordinators.router import router as section_coordinators_router # New
+from app.modules.salaries.router import router as salaries_router # New
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -128,16 +134,26 @@ school_app_router.include_router(sections_router, prefix="/classes", tags=["Scho
 school_app_router.include_router(subjects_router, prefix="/classes", tags=["School: Academics (Subjects)"])
 school_app_router.include_router(classes_router, prefix="/classes", tags=["School: Academics (Classes)"])
 school_app_router.include_router(students_router, tags=["School: Students"])
+school_app_router.include_router(teachers_router, tags=["School: Teachers"]) # New
+school_app_router.include_router(section_coordinators_router, tags=["School: Coordinators"]) # New
+school_app_router.include_router(salaries_router, tags=["School: Salaries"]) # New
 
 # Mount School Routes
 app.include_router(school_app_router, prefix="/school")
 
 # --- Student Routes Group ---
 student_app_router = APIRouter()
-student_app_router.include_router(student_auth_router, tags=["Student: Auth"]) # prefix /auth taken from router
+student_app_router.include_router(student_auth_router, tags=["Student: Auth"]) 
 
 # Mount Student Routes
 app.include_router(student_app_router, prefix="/student")
+
+# --- Teacher Routes Group ---
+teacher_app_router = APIRouter()
+teacher_app_router.include_router(teacher_auth_router, tags=["Teacher: Auth"])
+
+# Mount Teacher Routes
+app.include_router(teacher_app_router, prefix="/teacher")
 
 
 @app.get("/")

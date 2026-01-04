@@ -181,3 +181,51 @@ async def get_current_student_user(token: Annotated[str, Depends(student_oauth2_
     user["student_details"] = student
     return user
 
+
+# --- Teacher User Dependencies ---
+
+from app.core.security_teacher import decode_access_token as decode_teacher_token
+
+teacher_oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/teacher/auth/token",
+    scheme_name="Teacher User Auth"
+)
+
+async def get_current_teacher_user(token: Annotated[str, Depends(teacher_oauth2_scheme)]) -> dict:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    payload = decode_teacher_token(token)
+    if not payload:
+        raise credentials_exception
+        
+    user_id = payload.get("sub")
+    teacher_id = payload.get("teacher_id")
+    school_id = payload.get("school_id")
+    
+    if not user_id or not teacher_id:
+        raise credentials_exception
+        
+    db = await get_database()
+    
+    # 1. Check Teacher User (Auth)
+    user = await db["teacher_users"].find_one({"_id": user_id, "status": "active"})
+    if not user:
+        raise credentials_exception
+        
+    # 2. Check Teacher Record (Business Data) - Must also be active
+    teacher = await db["teachers"].find_one({"_id": teacher_id})
+    if not teacher or teacher.get("status") != "active":
+        raise HTTPException(status_code=403, detail="Teacher account is inactive")
+        
+    # 3. Check School Status
+    school = await db["schools"].find_one({"_id": school_id})
+    if not school or school.get("status") != "active":
+        raise HTTPException(status_code=403, detail="School is suspended or inactive")
+
+    # Return combined data
+    user["teacher_details"] = teacher
+    return user

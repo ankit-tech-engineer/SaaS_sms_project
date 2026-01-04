@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     # Student Security
     STUDENT_SECRET_KEY: str = "student_super_secret_key" # In prod, override with env
     STUDENT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 # 24 hours
+
+    # Teacher Security
+    TEACHER_SECRET_KEY: str = "teacher_super_secret_key" # In prod, override with env
+    TEACHER_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 # 24 hours
     
     # Init
     FIRST_SUPER_ADMIN_EMAIL: str = "admin@example.com"
