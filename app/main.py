@@ -29,6 +29,8 @@ from app.modules.school_auth.router import router as school_auth_router
 from app.modules.academics.classes.router import router as classes_router
 from app.modules.academics.sections.router import router as sections_router
 from app.modules.academics.subjects.router import router as subjects_router
+from app.modules.students.router import router as students_router
+from app.modules.student_auth.router import router as student_auth_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -125,9 +127,17 @@ school_app_router.include_router(school_auth_router, prefix="/auth", tags=["Scho
 school_app_router.include_router(sections_router, prefix="/classes", tags=["School: Academics (Sections)"])
 school_app_router.include_router(subjects_router, prefix="/classes", tags=["School: Academics (Subjects)"])
 school_app_router.include_router(classes_router, prefix="/classes", tags=["School: Academics (Classes)"])
+school_app_router.include_router(students_router, tags=["School: Students"])
 
 # Mount School Routes
 app.include_router(school_app_router, prefix="/school")
+
+# --- Student Routes Group ---
+student_app_router = APIRouter()
+student_app_router.include_router(student_auth_router, tags=["Student: Auth"]) # prefix /auth taken from router
+
+# Mount Student Routes
+app.include_router(student_app_router, prefix="/student")
 
 
 @app.get("/")

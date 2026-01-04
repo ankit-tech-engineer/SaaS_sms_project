@@ -19,12 +19,16 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 # 24 hours
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # Org Security
     ORG_SECRET_KEY: str = "org_super_secret_key" # In prod, override with env
-    ORG_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    ORG_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 # 24 hours
+    
+    # Student Security
+    STUDENT_SECRET_KEY: str = "student_super_secret_key" # In prod, override with env
+    STUDENT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 # 24 hours
     
     # Init
     FIRST_SUPER_ADMIN_EMAIL: str = "admin@example.com"
