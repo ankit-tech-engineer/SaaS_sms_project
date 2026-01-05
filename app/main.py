@@ -37,6 +37,7 @@ from app.modules.teachers.router import router as teachers_router # New
 from app.modules.teacher_auth.router import router as teacher_auth_router # New
 from app.modules.section_coordinators.router import router as section_coordinators_router # New
 from app.modules.salaries.router import router as salaries_router # New
+from app.modules.teacher_assignments.router import router as teacher_assignments_router # New
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -137,6 +138,7 @@ school_app_router.include_router(students_router, tags=["School: Students"])
 school_app_router.include_router(teachers_router, tags=["School: Teachers"]) # New
 school_app_router.include_router(section_coordinators_router, tags=["School: Coordinators"]) # New
 school_app_router.include_router(salaries_router, tags=["School: Salaries"]) # New
+school_app_router.include_router(teacher_assignments_router, tags=["School: Assignments"]) # Admin Access
 
 # Mount School Routes
 app.include_router(school_app_router, prefix="/school")
@@ -151,6 +153,7 @@ app.include_router(student_app_router, prefix="/student")
 # --- Teacher Routes Group ---
 teacher_app_router = APIRouter()
 teacher_app_router.include_router(teacher_auth_router, tags=["Teacher: Auth"])
+teacher_app_router.include_router(teacher_assignments_router, tags=["Teacher: Assignments"]) # Teacher Access
 
 # Mount Teacher Routes
 app.include_router(teacher_app_router, prefix="/teacher")

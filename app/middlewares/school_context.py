@@ -15,6 +15,10 @@ class SchoolContextMiddleware(BaseHTTPMiddleware):
         # BUT: Exclude Auth routes (login/profile) which use Tokens instead of Headers
         
         if request.url.path.startswith("/school") and not request.url.path.startswith("/school/auth"):
+            # If Authorization header is present, we assume the Token will provide the context via Dependency.
+            if request.headers.get("Authorization"):
+                return await call_next(request)
+
             school_id = request.headers.get("X-School-Id")
             
             if not school_id:
