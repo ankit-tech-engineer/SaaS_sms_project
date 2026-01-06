@@ -7,7 +7,7 @@ from app.modules.teacher_assignments.service import TeacherAssignmentService
 
 router = APIRouter()
 
-@router.post("/teacher-assignments", response_model=AssignmentResponse)
+@router.post("/class-teacher-assignments", response_model=AssignmentResponse)
 async def assign_teacher(
     request: CreateAssignmentRequest,
     current_user: dict = Depends(get_current_school_user)
@@ -23,7 +23,7 @@ async def assign_teacher(
     )
     return result
 
-@router.get("/teacher-assignments", response_model=AssignmentListResponse)
+@router.get("/class-teacher-assignments", response_model=AssignmentListResponse)
 async def list_assignments(
     class_id: str = Query(None),
     section_id: str = Query(None),
@@ -39,7 +39,7 @@ async def list_assignments(
     )
     return {"success": True, "data": data}
 
-@router.delete("/teacher-assignments/{assignment_id}")
+@router.delete("/class-teacher-unassignments/{assignment_id}")
 async def unassign_teacher(
     assignment_id: str,
     current_user: dict = Depends(get_current_school_user)
@@ -52,7 +52,7 @@ async def unassign_teacher(
         school_id=current_user["school_id"]
     )
 
-@router.get("/assignments", response_model=AssignmentListResponse) # /teacher prefix handling in main.py? No, this is likely /teacher/assignments
+@router.get("/my-class-assignments", response_model=AssignmentListResponse) # /teacher prefix handling in main.py? No, this is likely /teacher/assignments
 # Wait, main.py prefixes:
 # /school -> school_app_router
 # /teacher -> teacher_app_router
