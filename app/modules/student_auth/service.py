@@ -5,6 +5,8 @@ from app.core.security_student import verify_password, get_password_hash, create
 from app.modules.student_auth.schema import StudentLoginRequest, ChangePasswordRequest
 from app.modules.student_users.model import StudentUser
 
+from app.core.guards import validate_login_status
+
 class StudentAuthService:
     @staticmethod
     async def login(request: StudentLoginRequest):
@@ -19,17 +21,19 @@ class StudentAuthService:
         if not verify_password(request.password, user["password"]):
             raise HTTPException(status_code=400, detail="Invalid username or password")
             
-        # 3. Check Status (User, Student, School)
-        if user["status"] != "active":
-             raise HTTPException(status_code=403, detail="Account is inactive")
-             
+        # 3. Validate Status Hierarchy (Fail Fast)
+        await validate_login_status(
+            db=db,
+            org_id=user["org_id"],
+            school_id=user["school_id"],
+            user_status=user["status"],
+            role="STUDENT"
+        )
+            
+        # 3b. Check Student Record
         student = await db["students"].find_one({"_id": user["student_id"]})
         if not student or student.get("status") != "active":
              raise HTTPException(status_code=403, detail="Student record is inactive")
-             
-        school = await db["schools"].find_one({"_id": user["school_id"]})
-        if not school or school.get("status") != "active":
-             raise HTTPException(status_code=403, detail="School is suspended")
              
         # 4. Update Last Login
         await db["student_users"].update_one(

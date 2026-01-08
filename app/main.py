@@ -91,6 +91,8 @@ async def global_exception_handler(request: Request, exc: Exception):
         data=str(exc) if settings.PROJECT_NAME else None # Show error in dev
     )
 
+from app.middlewares.status_guard import StatusGuardMiddleware
+
 # Middleware
 app.add_middleware(
     CORSMiddleware,
@@ -100,6 +102,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(StatusGuardMiddleware) # Master Status Guard (Runs internal to Auth/Contexts)
 app.add_middleware(AuditMiddleware)
 app.add_middleware(AuthMiddleware) # Platform Auth
 app.add_middleware(OrgContextMiddleware) # Org Context Auth

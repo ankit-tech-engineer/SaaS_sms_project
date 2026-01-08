@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from app.core.dependencies import get_current_teacher_user, get_current_school_user
+from app.core.school_settings import SchoolSettings
 from app.modules.attendance.schema import (
     MarkAttendanceRequest, ReviewAttendanceRequest, GenericAttendanceResponse,
     SetPolicyRequest, PolicyResponse
@@ -24,12 +25,14 @@ async def set_attendance_policy(
         
     await SchoolSettings.set_attendance_policy(
         school_id=current_user["school_id"],
-        mode=request.mode
+        mode=request.mode,
+        past_attendance_days_allowed=request.past_attendance_days_allowed
     )
     
     return {
         "success": True,
-        "mode": request.mode
+        "mode": request.mode,
+        "past_attendance_days_allowed": request.past_attendance_days_allowed
     }
 
 @router.get("/get-attendance-policy", response_model=PolicyResponse)
@@ -39,13 +42,14 @@ async def get_attendance_policy(
     """
     Get School Attendance Policy.
     """
-    mode = await SchoolSettings.get_attendance_policy(
+    policy = await SchoolSettings.get_attendance_policy(
         school_id=current_user["school_id"]
     )
     
     return {
         "success": True,
-        "mode": mode
+        "mode": policy["mode"],
+        "past_attendance_days_allowed": policy["past_attendance_days_allowed"]
     }
 
 

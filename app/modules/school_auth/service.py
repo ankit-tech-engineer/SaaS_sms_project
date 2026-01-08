@@ -5,6 +5,8 @@ from app.modules.school_users.model import SchoolUser
 from app.modules.school_auth.schema import LoginRequest, TokenResponse, ChangePasswordRequest
 from app.core.security_school import verify_password, create_access_token, get_password_hash, create_refresh_token, decode_refresh_token
 
+from app.core.guards import validate_login_status
+
 class SchoolAuthService:
     @staticmethod
     async def authenticate_user(login_data: LoginRequest) -> TokenResponse:
@@ -19,14 +21,14 @@ class SchoolAuthService:
         if not verify_password(login_data.password, user["password"]):
             raise HTTPException(status_code=401, detail="Invalid email or password")
             
-        # 3. Check User Status
-        if user.get("status") != "active":
-            raise HTTPException(status_code=403, detail="Account is suspended or inactive")
-            
-        # 4. Check School Status
-        school = await db["schools"].find_one({"_id": user["school_id"]})
-        if not school or school.get("status") != "active":
-             raise HTTPException(status_code=403, detail="School is suspended. Access Denied.")
+        # 3. Validate Status Hierarchy (Fail Fast)
+        await validate_login_status(
+            db=db,
+            org_id=user["org_id"],
+            school_id=user["school_id"],
+            user_status=user.get("status"),
+            role=user.get("role", "SCHOOL_ADMIN") 
+        )
              
         # 5. Update Last Login
         await db["school_users"].update_one(

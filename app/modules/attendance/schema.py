@@ -28,6 +28,7 @@ class ReviewAttendanceRequest(BaseModel):
 
 class SetPolicyRequest(BaseModel):
     mode: Literal["COORDINATOR_ONLY", "SUBJECT_TEACHER"]
+    past_attendance_days_allowed: Optional[int] = 0
 
 # --- Responses ---
 class AttendanceReviewStatus(BaseModel):
@@ -43,7 +44,7 @@ class AttendanceResponseData(BaseModel):
     date: str
     status: str
     locked: bool
-    review: Optional[AttendanceReviewStatus]
+    review: Optional[AttendanceReviewStatus] = None
     
 class GenericAttendanceResponse(BaseModel):
     success: bool
@@ -53,3 +54,4 @@ class GenericAttendanceResponse(BaseModel):
 class PolicyResponse(BaseModel):
     success: bool
     mode: str
+    past_attendance_days_allowed: int

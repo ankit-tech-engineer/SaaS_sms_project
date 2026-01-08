@@ -4,6 +4,8 @@ from app.core.database import get_database
 from app.core.security_teacher import verify_password, get_password_hash, create_access_token, create_refresh_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.modules.teacher_auth.schema import TeacherLoginRequest, ChangePasswordRequest
 
+from app.core.guards import validate_login_status
+
 class TeacherAuthService:
     @staticmethod
     async def login(request: TeacherLoginRequest):
@@ -18,17 +20,19 @@ class TeacherAuthService:
         if not verify_password(request.password, user["password"]):
             raise HTTPException(status_code=400, detail="Invalid username or password")
             
-        # 3. Check Status (User, Teacher, School)
-        if user["status"] != "active":
-             raise HTTPException(status_code=403, detail="Account is inactive")
-             
+        # 3. Validate Status Hierarchy (Fail Fast)
+        await validate_login_status(
+            db=db,
+            org_id=user["org_id"],
+            school_id=user["school_id"],
+            user_status=user["status"],
+            role="TEACHER"
+        )
+        
+        # 3b. Validate Teacher Record specific status (Business Logic)
         teacher = await db["teachers"].find_one({"_id": user["teacher_id"]})
         if not teacher or teacher.get("status") != "active":
              raise HTTPException(status_code=403, detail="Teacher record is inactive")
-             
-        school = await db["schools"].find_one({"_id": user["school_id"]})
-        if not school or school.get("status") != "active":
-             raise HTTPException(status_code=403, detail="School is suspended")
              
         # 4. Check if Section Coordinator
         # We check the section_coordinators collection to see if this teacher is assigned active

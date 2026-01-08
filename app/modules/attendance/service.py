@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from uuid import uuid4
 from typing import Optional
 from pymongo.errors import DuplicateKeyError
 from fastapi import HTTPException, status
@@ -18,94 +19,115 @@ class AttendanceService:
         request: MarkAttendanceRequest,
         org_id: str,
         school_id: str,
-        teacher_id: str
+        teacher_id: str,
+        user_type: str = "TEACHER" # Or pass context if needed
     ):
         """
-        Mark Attendance with Hybrid Logic.
+        Mark Attendance with Centralized Validation.
         """
-        # 1. Resolve Policy
-        policy_mode = await SchoolSettings.get_attendance_policy(school_id)
+        # 1. Fetch Policy (Full Config)
+        policy = await SchoolSettings.get_attendance_policy(school_id)
         
-        # 2. Check Holiday
-        if await HolidayService.is_holiday(school_id, request.date):
-             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Attendance cannot be marked on a holiday ({request.date})."
-            )
-            
-        # 3. Resolve Academic Year
-        academic_year = get_current_academic_year() # Assuming this is synchronous or we await if needed. Check import.
-        # It's usually a function.
+        # 2. Resolve Academic Year
+        academic_year = get_current_academic_year()
         
-        # 4. Mode Specific Logic
-        status_val = "SUBMITTED"
-        locked = False
-        final_subject_id = request.subject_id
+        # 3. Validate
+        # This function handles Pre-conditions (Holiday, Future), Permissions, Policy Rules
+        from app.modules.attendance.validation import validate_attendance_marking
         
-        attendance_date = date.fromisoformat(request.date)
-
-        if policy_mode == "COORDINATOR_ONLY":
-            # Guard: Must be Coordinator
-            if not await is_section_coordinator(teacher_id, request.section_id, school_id):
-                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Only Section Coordinators can mark attendance in this mode."
-                )
-            
-            # Enforce Subject ID -> None
-            final_subject_id = None
-            status_val = "APPROVED"
-            locked = True
-            
-        elif policy_mode == "SUBJECT_TEACHER":
-            # Guard: Must be Assigned Teacher (Primary or Substitute)
-            if not request.subject_id:
-                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Subject ID is required in SUBJECT_TEACHER mode."
-                )
-                
-            is_valid = await validate_teacher_assignment(
-                teacher_id, request.class_id, request.section_id, request.subject_id, school_id, attendance_date
-            )
-            
-            if not is_valid:
-                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="You are not authorized to mark attendance for this subject/class."
-                )
-            
-            status_val = "SUBMITTED"
-            locked = False
-            
-        # 5. Insert Record
-        doc = request.model_dump()
-        doc.update({
-            "org_id": org_id,
+        validation_result = await validate_attendance_marking(
+            request=request,
+            policy=policy,
+            school_id=school_id,
+            teacher_id=teacher_id,
+            user_type=user_type, # We might need to fetch user role from DB if passed generic 'TEACHER'
+            academic_year=academic_year
+        )
+        
+        # 4. Check for Existing Record & Handle Upsert
+        query = {
             "school_id": school_id,
-            "subject_id": final_subject_id, # Overwrite with None if COORD mode
+            "class_id": request.class_id,
+            "section_id": request.section_id,
+            "subject_id": validation_result["subject_id"], 
             "academic_year": academic_year,
-            "marked_by": teacher_id,
-            "status": status_val,
-            "locked": locked,
-            "created_at": datetime.utcnow(),
-            "review": {
+            "date": request.date
+        }
+        
+        database = db.get_db()
+        existing = await database[COLLECTION_NAME].find_one(query)
+        
+        if existing:
+            # Check Lock Status
+            if existing.get("locked", False):
+                # If Locked, ONLY Coordinator can edit (Implicitly Policy Mode = COORDINATOR_ONLY)
+                # Or if Subject Teacher mode, blocked?
+                # Policy says: COORDINATOR_ONLY -> Auto-Approved (Locked).
+                # Implementation: Coordinator IS the authority. So they can OVERWRITE their own locked record.
+                
+                # We need to re-verify if current user allows editing locked records.
+                # In COORDINATOR_ONLY mode: User is Coordinator. OK.
+                # In SUBJECT_TEACHER mode: If Locked (Approved), Teacher Cannot Edit.
+                
+                if policy.get("mode") == "SUBJECT_TEACHER":
+                     raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Attendance is locked/approved and cannot be modified."
+                    )
+        
+        # 5. Upsert Record (Merge Logic)
+        # We need to merge existing records with new ones to support partial updates.
+        
+        final_records_map = {}
+        
+        # A. Load existing records into map
+        if existing and "records" in existing:
+            for r in existing["records"]:
+                # Ensure student_id key exists
+                if "student_id" in r:
+                    final_records_map[r["student_id"]] = r
+                    
+        # B. Overwrite/Append new records
+        for r in request.records:
+            final_records_map[r.student_id] = r.model_dump()
+            
+        final_records_list = list(final_records_map.values())
+        
+        update_doc = {
+            "$set": {
+                "records": final_records_list,
+                "marked_by": teacher_id,
+                "status": validation_result["status"],
+                "locked": validation_result["locked"],
+                "org_id": org_id, # Ensure these are set on insert
+                "created_at": existing.get("created_at") if existing else datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            "$setOnInsert": {
+                "_id": f"stu_atd_{uuid4().hex[:12]}"
+            }
+        }
+        
+        # Reset review if re-submitted in Subject Teacher mode?
+        # If unlocked, yes.
+        if not validation_result["locked"]:
+            update_doc["$set"]["review"] = {
                 "reviewed_by": None,
                 "reviewed_at": None,
                 "remarks": None
             }
-        })
+            
+        result = await database[COLLECTION_NAME].update_one(query, update_doc, upsert=True)
         
-        database = db.get_db()
-        try:
-            result = await database[COLLECTION_NAME].insert_one(doc)
-            doc["_id"] = str(result.inserted_id)
-            return doc
-        except DuplicateKeyError:
-             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Attendance already marked for this date/subject."
-            )
+        # Return merged/updated doc
+        doc = request.model_dump()
+        doc.update({
+            "_id": str(existing["_id"]) if existing else str(result.upserted_id),
+            "status": validation_result["status"],
+            "locked": validation_result["locked"]
+        })
+        return doc
+        
 
     @staticmethod
     async def review_attendance(
