@@ -2,13 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 
 from app.core.dependencies import get_current_teacher_user, get_current_school_user
-from app.modules.attendance_corrections.schema import (
+from app.modules.attendance.attendance_corrections.schema import (
     CreateCorrectionRequest, 
     CorrectionResponse, 
     CoordinatorReviewRequest, 
     AdminReviewRequest
 )
-from app.modules.attendance_corrections.service import AttendanceCorrectionService
+from app.modules.attendance.attendance_corrections.service import AttendanceCorrectionService
 from app.utils.response import APIResponse
 
 # Split Routers

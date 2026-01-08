@@ -1,5 +1,5 @@
 from app.core.database import get_database
-from app.modules.school_users.model import SchoolUser
+from app.modules.schools.school_users.model import SchoolUser
 from app.core.security_school import get_password_hash
 import secrets
 import string

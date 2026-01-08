@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from app.modules.org_auth.schema import OrgLogin, OrgTokenResponse, OrgProfile, OrgRefreshTokenRequest
-from app.modules.org_auth.service import OrgAuthService
+from app.modules.organizations.org_auth.schema import OrgLogin, OrgTokenResponse, OrgProfile, OrgRefreshTokenRequest
+from app.modules.organizations.org_auth.service import OrgAuthService
 from app.core.security import create_access_token, create_refresh_token
 from jose import jwt, JWTError
 from app.core.config import settings

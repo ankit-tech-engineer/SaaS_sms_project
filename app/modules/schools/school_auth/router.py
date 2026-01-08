@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.utils.response import APIResponse
-from app.modules.school_auth.schema import LoginRequest, ChangePasswordRequest, SchoolUserResponse
-from app.modules.school_auth.service import SchoolAuthService
+from app.modules.schools.school_auth.schema import LoginRequest, ChangePasswordRequest, SchoolUserResponse
+from app.modules.schools.school_auth.service import SchoolAuthService
 from app.core.dependencies import get_current_school_user
 
 router = APIRouter()
@@ -12,7 +12,7 @@ async def login(login_data: LoginRequest):
     return APIResponse.success(result.model_dump(), "Login successful")
 
 # Refresh Token Endpoint
-from app.modules.school_auth.schema import RefreshTokenRequest
+from app.modules.schools.school_auth.schema import RefreshTokenRequest
 @router.post("/refresh-token")
 async def refresh_token(payload: RefreshTokenRequest):
     result = await SchoolAuthService.refresh_access_token(payload.refresh_token)

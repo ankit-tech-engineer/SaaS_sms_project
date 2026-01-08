@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from app.core.database import get_database
-from app.modules.org_auth.model import OrgUser
+from app.modules.organizations.org_auth.model import OrgUser
 from app.core.security import verify_password, get_password_hash
 from app.core.config import settings
 

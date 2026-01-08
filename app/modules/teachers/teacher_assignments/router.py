@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Query
 from app.core.dependencies import get_current_school_user, get_current_teacher_user
-from app.modules.teacher_assignments.schema import (
+from app.modules.teachers.teacher_assignments.schema import (
     CreateAssignmentRequest, AssignmentResponse, AssignmentListResponse
 )
-from app.modules.teacher_assignments.service import TeacherAssignmentService
+from app.modules.teachers.teacher_assignments.service import TeacherAssignmentService
 
 router = APIRouter()
 

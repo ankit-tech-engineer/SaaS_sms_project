@@ -1,19 +1,18 @@
 from datetime import datetime
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from app.core.database import get_database
-from app.core.security_student import verify_password, get_password_hash, create_access_token, create_refresh_token, ACCESS_TOKEN_EXPIRE_MINUTES
-from app.modules.student_auth.schema import StudentLoginRequest, ChangePasswordRequest
-from app.modules.student_users.model import StudentUser
+from app.core.security_teacher import verify_password, get_password_hash, create_access_token, create_refresh_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.modules.teachers.teacher_auth.schema import TeacherLoginRequest, ChangePasswordRequest
 
 from app.core.guards import validate_login_status
 
-class StudentAuthService:
+class TeacherAuthService:
     @staticmethod
-    async def login(request: StudentLoginRequest):
+    async def login(request: TeacherLoginRequest):
         db = await get_database()
         
         # 1. Find User
-        user = await db["student_users"].find_one({"username": request.username})
+        user = await db["teacher_users"].find_one({"username": request.username})
         if not user:
             raise HTTPException(status_code=400, detail="Invalid username or password")
             
@@ -27,28 +26,37 @@ class StudentAuthService:
             org_id=user["org_id"],
             school_id=user["school_id"],
             user_status=user["status"],
-            role="STUDENT"
+            role="TEACHER"
         )
-            
-        # 3b. Check Student Record
-        student = await db["students"].find_one({"_id": user["student_id"]})
-        if not student or student.get("status") != "active":
-             raise HTTPException(status_code=403, detail="Student record is inactive")
+        
+        # 3b. Validate Teacher Record specific status (Business Logic)
+        teacher = await db["teachers"].find_one({"_id": user["teacher_id"]})
+        if not teacher or teacher.get("status") != "active":
+             raise HTTPException(status_code=403, detail="Teacher record is inactive")
              
-        # 4. Update Last Login
-        await db["student_users"].update_one(
+        # 4. Check if Section Coordinator
+        # We check the section_coordinators collection to see if this teacher is assigned active
+        coordinator_record = await db["section_coordinators"].find_one({
+            "teacher_id": user["teacher_id"],
+            "status": "active"
+        })
+        is_coord = True if coordinator_record else False
+
+        # 5. Update Last Login
+        await db["teacher_users"].update_one(
             {"_id": user["_id"]},
             {"$set": {"last_login_at": datetime.utcnow()}}
         )
         
-        # 5. Generate Tokens
+        # 6. Generate Tokens
         access_token = create_access_token(
             subject=user["_id"],
             extra_claims={
                 "org_id": user["org_id"],
                 "school_id": user["school_id"],
-                "student_id": user["student_id"],
-                "role": "STUDENT"
+                "teacher_id": user["teacher_id"],
+                "role": "TEACHER",
+                "is_section_coordinator": is_coord
             }
         )
         refresh_token = create_refresh_token(subject=user["_id"])
@@ -66,7 +74,7 @@ class StudentAuthService:
         request: ChangePasswordRequest
     ):
         db = await get_database()
-        user = await db["student_users"].find_one({"_id": user_id})
+        user = await db["teacher_users"].find_one({"_id": user_id})
         
         if not user:
              raise HTTPException(status_code=404, detail="User not found")
@@ -75,14 +83,14 @@ class StudentAuthService:
         if not verify_password(request.old_password, user["password"]):
              raise HTTPException(status_code=400, detail="Incorrect old password")
              
-        # New Password Validation (Simple check, can be expanded)
+        # Minimum Length Check
         if len(request.new_password) < 8:
              raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
              
         # Update Hash
         hashed_password = get_password_hash(request.new_password)
         
-        await db["student_users"].update_one(
+        await db["teacher_users"].update_one(
             {"_id": user_id},
             {"$set": {
                 "password": hashed_password,

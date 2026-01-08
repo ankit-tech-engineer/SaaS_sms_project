@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from app.core.dependencies import get_current_teacher_user
 from app.core.database import get_database
-from app.modules.teacher_auth.schema import (
+from app.modules.teachers.teacher_auth.schema import (
     TeacherLoginRequest, TeacherLoginResponse, TeacherProfileResponse,
     ChangePasswordRequest, GenericResponse
 )
-from app.modules.teacher_auth.service import TeacherAuthService
+from app.modules.teachers.teacher_auth.service import TeacherAuthService
 
 router = APIRouter(prefix="/auth")
 

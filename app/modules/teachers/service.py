@@ -7,7 +7,7 @@ from app.core.database import get_database
 from app.core.security_teacher import get_password_hash
 from app.modules.teachers.schema import CreateTeacherRequest
 from app.modules.teachers.model import Teacher, PersonalInfo, ContactInfo, ProfessionalInfo
-from app.modules.teacher_auth.model import TeacherUser, TeacherSecurity
+from app.modules.teachers.teacher_auth.model import TeacherUser, TeacherSecurity
 
 class TeacherService:
     @staticmethod

@@ -4,8 +4,8 @@ from app.core.database import db
 from app.core.school_settings import SchoolSettings
 from app.core.audit_logger import AuditLogger
 from app.modules.attendance.model import COLLECTION_NAME as ATTENDANCE_COLLECTION
-from app.modules.attendance_corrections.model import AttendanceCorrectionModel, COLLECTION_NAME as CORRECTION_COLLECTION
-from app.modules.attendance_corrections.schema import CreateCorrectionRequest, ReviewDetails, CorrectionUser
+from app.modules.attendance.attendance_corrections.model import AttendanceCorrectionModel, COLLECTION_NAME as CORRECTION_COLLECTION
+from app.modules.attendance.attendance_corrections.schema import CreateCorrectionRequest, ReviewDetails, CorrectionUser
 from app.core.permissions import is_section_coordinator 
 
 class AttendanceCorrectionService:

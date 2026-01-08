@@ -2,7 +2,7 @@ from datetime import datetime
 from app.core.database import get_database
 from app.modules.schools.model import School, SchoolAddress, SchoolContact, SchoolSettings, SchoolBranding
 from app.core.security_school import create_access_token
-from app.modules.school_users.service import SchoolUserService
+from app.modules.schools.school_users.service import SchoolUserService
 from app.modules.schools.schema import CreateSchoolRequest, UpdateSchoolRequest, SchoolCreationResponse, CreateSchoolAdminResponse
 
 class SchoolService:

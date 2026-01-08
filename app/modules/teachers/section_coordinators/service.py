@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import uuid4
 from fastapi import HTTPException
 from app.core.database import get_database
-from app.modules.section_coordinators.model import SectionCoordinator
+from app.modules.teachers.section_coordinators.model import SectionCoordinator
 
 class SectionCoordinatorService:
     @staticmethod

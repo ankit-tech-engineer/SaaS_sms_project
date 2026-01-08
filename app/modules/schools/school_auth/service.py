@@ -1,8 +1,8 @@
 from datetime import datetime
 from fastapi import HTTPException, status
 from app.core.database import get_database
-from app.modules.school_users.model import SchoolUser
-from app.modules.school_auth.schema import LoginRequest, TokenResponse, ChangePasswordRequest
+from app.modules.schools.school_users.model import SchoolUser
+from app.modules.schools.school_auth.schema import LoginRequest, TokenResponse, ChangePasswordRequest
 from app.core.security_school import verify_password, create_access_token, get_password_hash, create_refresh_token, decode_refresh_token
 
 from app.core.guards import validate_login_status

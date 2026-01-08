@@ -3,8 +3,8 @@ from typing import Literal
 from uuid import uuid4
 from fastapi import HTTPException
 from app.core.database import get_database
-from app.modules.teacher_assignments.model import TeacherAssignment
-from app.modules.teacher_assignments.schema import CreateAssignmentRequest
+from app.modules.teachers.teacher_assignments.model import TeacherAssignment
+from app.modules.teachers.teacher_assignments.schema import CreateAssignmentRequest
 
 class TeacherAssignmentService:
     @staticmethod

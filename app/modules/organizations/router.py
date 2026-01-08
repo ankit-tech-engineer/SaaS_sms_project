@@ -2,7 +2,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from app.modules.organizations.schema import OrgSignupRequest, OrgSignupResponse, OrgResponse, OrgUpdate
 from app.modules.organizations.model import Organization
-from app.modules.org_auth.service import OrgAuthService
+from app.modules.organizations.org_auth.service import OrgAuthService
 from app.utils.response import APIResponse
 from app.core.database import get_database
 from app.core.dependencies import check_permissions

@@ -24,23 +24,28 @@ from app.modules.plans.router import router as plans_router
 from app.modules.organizations.router import router as org_router
 from app.modules.subscriptions.router import router as sub_router
 from app.modules.payments.router import router as payment_router
-from app.modules.org_auth.router import router as org_auth_router
+from app.modules.organizations.org_auth.router import router as org_auth_router
 from app.modules.audit.router import router as audit_router
 from app.modules.schools.router import router as school_router
-from app.modules.school_auth.router import router as school_auth_router
+from app.modules.schools.school_auth.router import router as school_auth_router
 from app.modules.academics.classes.router import router as classes_router
 from app.modules.academics.sections.router import router as sections_router
 from app.modules.academics.subjects.router import router as subjects_router
 from app.modules.students.router import router as students_router
-from app.modules.student_auth.router import router as student_auth_router
+from app.modules.students.student_auth.router import router as student_auth_router
 from app.modules.teachers.router import router as teachers_router # New
-from app.modules.teacher_auth.router import router as teacher_auth_router # New
-from app.modules.section_coordinators.router import router as section_coordinators_router # New
+from app.modules.teachers.teacher_auth.router import router as teacher_auth_router # New
+from app.modules.teachers.section_coordinators.router import router as section_coordinators_router # New
 from app.modules.salaries.router import router as salaries_router # New
-from app.modules.teacher_assignments.router import router as teacher_assignments_router # New
+from app.modules.teachers.teacher_assignments.router import router as teacher_assignments_router # New
 from app.modules.holidays.router import router as holidays_router # New
 from app.modules.attendance.router import router as attendance_router # New
-from app.modules.attendance_corrections.router import teacher_router as attendance_corrections_teacher_router, admin_router as attendance_corrections_admin_router # New
+from app.modules.attendance.attendance_corrections.router import teacher_router as attendance_corrections_teacher_router, admin_router as attendance_corrections_admin_router # New
+from app.modules.reports.attendance_reports.router import (
+    router as attendance_reports_router, 
+    coordinator_router as attendance_reports_coordinator_router,
+    student_router as attendance_reports_student_router # New
+)
 from app.modules.holidays.model import ensure_holiday_indexes
 from app.modules.attendance.model import ensure_attendance_indexes
 
@@ -152,6 +157,7 @@ school_app_router.include_router(teacher_assignments_router, tags=["School: Clas
 school_app_router.include_router(holidays_router, tags=["School: Holidays"]) # New
 school_app_router.include_router(attendance_router, tags=["School: Attendance"]) # New
 school_app_router.include_router(attendance_corrections_admin_router, tags=["School: Attendance Corrections"]) # New
+school_app_router.include_router(attendance_reports_router, tags=["School: Attendance Reports"]) # New
 
 # Mount School Routes
 app.include_router(school_app_router, prefix="/school")
@@ -159,6 +165,7 @@ app.include_router(school_app_router, prefix="/school")
 # --- Student Routes Group ---
 student_app_router = APIRouter()
 student_app_router.include_router(student_auth_router, tags=["Student: Auth"]) 
+student_app_router.include_router(attendance_reports_student_router, tags=["Student: Attendance Reports"]) # New 
 
 # Mount Student Routes
 app.include_router(student_app_router, prefix="/student")
@@ -167,6 +174,7 @@ app.include_router(student_app_router, prefix="/student")
 teacher_app_router = APIRouter()
 teacher_app_router.include_router(teacher_auth_router, tags=["Teacher: Auth"])
 teacher_app_router.include_router(attendance_corrections_teacher_router, tags=["Teacher: Attendance Corrections"]) # New
+teacher_app_router.include_router(attendance_reports_coordinator_router, tags=["Teacher: Attendance Reports"]) # New
 # teacher_app_router.include_router(teacher_assignments_router, tags=["Teacher: Class Teacher Assignments"]) # Teacher Access
 
 # Mount Teacher Routes

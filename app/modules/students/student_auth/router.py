@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from app.core.dependencies import get_current_student_user
-from app.modules.student_auth.schema import (
+from app.modules.students.student_auth.schema import (
     StudentLoginRequest, StudentLoginResponse, StudentProfileResponse,
     ChangePasswordRequest, GenericResponse
 )
-from app.modules.student_auth.service import StudentAuthService
+from app.modules.students.student_auth.service import StudentAuthService
 
 router = APIRouter(prefix="/auth")
 

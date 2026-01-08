@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from app.core.dependencies import get_current_school_user
-from app.modules.section_coordinators.service import SectionCoordinatorService
+from app.modules.teachers.section_coordinators.service import SectionCoordinatorService
 
 router = APIRouter()
 

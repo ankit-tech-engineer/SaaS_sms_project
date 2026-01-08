@@ -7,7 +7,7 @@ from app.core.roll_number import generate_next_roll_number
 from app.core.security_student import get_password_hash
 from app.modules.students.schema import StudentAdmissionRequest
 from app.modules.students.model import Student, AcademicInfo, PersonalInfo, ParentInfo
-from app.modules.student_users.model import StudentUser, StudentSecurity
+from app.modules.students.student_users.model import StudentUser, StudentSecurity
 
 class StudentService:
     @staticmethod
